@@ -18,7 +18,7 @@ root.geometry("1000x600")
 root.minsize(width = 500, height = 300)
 
 # ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
-# DataInput Funktionen
+# Data Input Funktionen
 # ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
 
 # Globale Variable für die Matplotlib-Figur
@@ -94,19 +94,26 @@ def show_empty_plot_kmeans():
     axKmeans.plot([], [])  # Keine Datenpunkte
     canvasKmeans.draw()
 
-# Funktion, um die Eingabe auf eine dreistellige Zahl zu beschränken
+# Funktion, um die Eingabe für k auf eine dreistellige Zahl zu beschränken
 def validate_input(new_value):
     if new_value == "":  # Erlaubt leere Eingaben (falls der User löscht)
         return True
-    if new_value.isdigit() and len(new_value) <= 3:  # Nur Ziffern und maximal 3 Stellen
+    if new_value.isdigit() and len(new_value) <= 3 and int(new_value) > 1:  # Nur Ziffern, max. 3 Stellen, kein 1
         return True
     return False
 
+# Validierung der Eingabe für das k-Entry
+k_var = StringVar()
+k_var.trace_add("write", lambda *args: validate_input(k_var.get()))
+
 # ▉▉▉▉▉▉K-MEANS▉▉▉▉▉▉
 
-def compute_kmeans():
+def kmeans():
     file_path = data_input_entry.get()  # Pfad zur Datei aus Entry
     try:
+        # Den Wert von k aus dem Entry lesen
+        k = int(k_var.get())
+        
         # Datei laden (CSV oder TXT)
         if file_path.endswith('.csv'):
             data = pd.read_csv(file_path, delimiter=',', header=0)  # Komma als Trennzeichen
@@ -123,7 +130,7 @@ def compute_kmeans():
         print(f'Daten für K-Means: {X[:5]}')  # Ersten 5 Zeilen ausgeben
 
         # K-Means Clustering anwenden
-        kmeans = KMeans(n_clusters=3)  # 3 Cluster als Beispiel
+        kmeans = KMeans(n_clusters=k-1)  # 3 Cluster als Beispiel
         kmeans.fit(X)
         y_kmeans = kmeans.predict(X)
         
@@ -132,7 +139,7 @@ def compute_kmeans():
         axKmeans.scatter(X[:, 0], X[:, 1], c=y_kmeans, s=50, cmap='viridis')
         axKmeans.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], 
                    s=200, c='red', label='Centroids')
-        axKmeans.set_title("K-Means Clustering")
+        axKmeans.set_title(f"K-Means Clustering with k={k}")
         axKmeans.set_xlabel("X-axis")
         axKmeans.set_ylabel("Y-axis")
         axKmeans.legend()
@@ -176,7 +183,7 @@ kmeans_frame = ctk.CTkFrame(root)
 kmeans_frame.grid(row=2, column=0, padx=6, pady=6)
 kmeans_label = ctk.CTkLabel(kmeans_frame, text = "K-Means")
 kmeans_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
-compute_button = ctk.CTkButton(kmeans_frame, text="Compute", width=30, command=compute_kmeans)
+compute_button = ctk.CTkButton(kmeans_frame, text="Compute", width=30, command=kmeans)
 compute_button.grid(row=3, column=0, padx=5, pady=5, sticky = 'w')
 reset_button = ctk.CTkButton(kmeans_frame, text="Reset", width=30, command=show_empty_plot_kmeans)
 reset_button.grid(row=3, column=1, padx=5, pady=5, sticky = 'w')
@@ -184,7 +191,7 @@ k_parameter_label = ctk.CTkLabel(kmeans_frame, text = "cluster quantity k")
 k_parameter_label.grid(row=1, column=0, padx=5, pady=5, sticky = 'w')
 # Validierungsfunktion registrieren
 vcmd = (root.register(validate_input), "%P")
-k_entry = ctk.CTkEntry(kmeans_frame, width=40, height=30, validate="key", validatecommand=vcmd, justify="center")
+k_entry = ctk.CTkEntry(kmeans_frame, textvariable=k_var, width=40, height=30, validate="key", validatecommand=vcmd, justify="center")
 k_entry.grid(row=1, column=1, padx=6, pady=6)
 
 # Matplotlib Canvas in das Tkinter-Fenster einfügen
