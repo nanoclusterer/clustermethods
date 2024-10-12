@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN
 import os
 
 plt.style.use('https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-dark.mplstyle')
@@ -30,6 +31,25 @@ def set_minimum_window_size(root):
 
     # Set the minimum size of the window to this size
     root.minsize(required_width, required_height)
+
+def resize_window_to_screen(root, scale=0.8):
+    """
+    Passt die Fenstergröße basierend auf der Bildschirmauflösung an.
+    
+    Args:
+    - root: Die Hauptanwendung (CTk-Fenster).
+    - scale: Skalierungsfaktor. Standard ist 80% der Bildschirmgröße.
+    """
+    # Bildschirmauflösung ermitteln
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+
+    # Fenstergröße basierend auf dem Skalierungsfaktor festlegen
+    window_width = int(screen_width * scale)
+    window_height = int(screen_height * scale)
+
+    # Fenstergröße setzen und das Fenster mittig auf dem Bildschirm platzieren
+    root.geometry(f"{window_width}x{window_height}+{int((screen_width - window_width) / 2)}+{int((screen_height - window_height) / 2)}")
 
 # ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
 # Data Input Funktionen
@@ -132,7 +152,7 @@ def kmeans():
         if file_path.endswith('.csv'):
             data = pd.read_csv(file_path, delimiter=',', header=0)  # Komma als Trennzeichen
         elif file_path.endswith('.txt'):
-            data = pd.read_csv(file_path, delimiter='\t', header=0)  # Komma als Trennzeichen
+            data = pd.read_csv(file_path, delimiter='\t', header=0)  # Tab als Trennzeichen
         else:
             raise ValueError("Bitte eine .csv oder .txt Datei auswählen.")
         
@@ -224,6 +244,78 @@ def show_empty_plot_dbscan():
     axDBSCAN.plot([], [])  # Keine Datenpunkte
     canvasDBSCAN.draw()
 
+
+# Funktion, um die Eingabe für epsilon und min_samples auf gültige Werte zu beschränken
+def validate_input_epsilon(new_value):
+    if new_value == "":  # Leere Eingaben zulassen (z. B. beim Löschen)
+        return True
+    try:
+        # Überprüfen, ob die Eingabe eine gültige Zahl ist und im gewünschten Bereich liegt
+        value = float(new_value)
+        if 0 <= value < 10000 and len(new_value) <= 6:
+            return True
+        return False
+    except ValueError:
+        # Falls die Eingabe nicht in eine Zahl umgewandelt werden kann, ist sie ungültig (z. B. bei Buchstaben)
+        return False
+
+epsilon_var = StringVar()
+# Validierung für epsilon
+epsilon_var.trace_add("write", lambda *args: validate_input_epsilon(epsilon_var.get()))
+
+min_samples_var = StringVar()
+# Validierung für min_samples
+min_samples_var.trace_add("write", lambda *args: validate_input_min_samples(min_samples_var.get()))
+
+
+def validate_input_min_samples(new_value):
+    if new_value == "" or (new_value.isdigit() and 0 < int(new_value) < 10000):  # min_samples muss > 0 und < 10000 sein
+        return True
+    return False
+    
+# ▉▉▉▉▉▉ DBSCAN ▉▉▉▉▉▉
+
+def dbscan():
+    file_path = data_input_entry.get()  # Pfad zur Datei aus Entry
+    try:
+        # Den Wert von Epsilon aus dem Entry lesen
+        epsilon = float(epsilon_entry.get())
+        # Den Wert von min_samples aus dem Entry lesen
+        min_samples = int(samples_entry.get())
+
+        # Datei laden (CSV oder TXT)
+        if file_path.endswith('.csv'):
+            data = pd.read_csv(file_path, delimiter=',', header=0)  # Komma als Trennzeichen
+        elif file_path.endswith('.txt'):
+            data = pd.read_csv(file_path, delimiter='\t', header=0)  # Tab als Trennzeichen
+        else:
+            raise ValueError("Bitte eine .csv oder .txt Datei auswählen.")
+            
+        # Beispielhafte Daten (2D Punkte)
+        X = data.values
+
+        # DBSCAN Algorithmus ausführen
+        dbscan = DBSCAN(eps=epsilon, min_samples=min_samples)
+        labels = dbscan.fit_predict(X)
+
+        # Ergebnisse plotten
+        axDBSCAN.clear()
+        axDBSCAN.set_xlim([0, 10])
+        axDBSCAN.set_ylim([0, 10])
+    
+        # Unterschiedliche Cluster mit unterschiedlichen Farben plotten
+        unique_labels = set(labels)
+        for label in unique_labels:
+            label_mask = labels == label
+            axDBSCAN.scatter(X[label_mask, 0], X[label_mask, 1], label=f"Cluster {label}")
+    
+        axDBSCAN.set_title("DBSCAN Clustering")
+        axDBSCAN.legend()
+        canvasDBSCAN.draw()
+    except Exception as e:
+        print(f"Fehler beim Laden der Datei: {e}")
+        
+
 # ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
 # GUI Elemente
 # ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
@@ -302,20 +394,25 @@ dbscan_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
 epsilon_parameter_label = ctk.CTkLabel(dbscan_frame, text = "radius E")
 epsilon_parameter_label.grid(row=1, column=0, padx=5, pady=5, sticky = 'w')
 # Validierungsfunktion registrieren
-#####vcmd = (root.register(validate_input), "%P")
-epsilon_entry = ctk.CTkEntry(dbscan_frame, textvariable=k_var, width=40, height=30, validate="key", validatecommand=vcmd, justify="center")
+vcmd_epsilon = (root.register(validate_input_epsilon), "%P")
+epsilon_entry = ctk.CTkEntry(dbscan_frame, textvariable=epsilon_var, width=40, height=30, validate="key", validatecommand=vcmd_epsilon, justify="center")
 epsilon_entry.grid(row=1, column=1, padx=6, pady=6, sticky = 'e')
 
-points_parameter_label = ctk.CTkLabel(dbscan_frame, text = "min. Points in r")
-points_parameter_label.grid(row=2, column=0, padx=5, pady=5, sticky = 'w')
+samples_parameter_label = ctk.CTkLabel(dbscan_frame, text = "min. Points in r")
+samples_parameter_label.grid(row=2, column=0, padx=5, pady=5, sticky = 'w')
 # Validierungsfunktion registrieren
-#####vcmd = (root.register(validate_input), "%P")
-points_entry = ctk.CTkEntry(dbscan_frame, textvariable=k_var, width=40, height=30, validate="key", validatecommand=vcmd, justify="center")
-points_entry.grid(row=2, column=1, padx=6, pady=6, sticky = 'e')
+vcmd_samples = (root.register(validate_input_min_samples), "%P")
+samples_entry = ctk.CTkEntry(dbscan_frame, textvariable=min_samples_var, width=40, height=30, validate="key", validatecommand=vcmd_samples, justify="center")
+samples_entry.grid(row=2, column=1, padx=6, pady=6, sticky = 'e')
 
 # Matplotlib Canvas in das Tkinter-Fenster einfügen
 canvasDBSCAN = FigureCanvasTkAgg(figDBSCAN, dbscan_frame)
 canvasDBSCAN.get_tk_widget().grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+
+compute_button = ctk.CTkButton(dbscan_frame, text="Compute", width=30, command=dbscan)
+compute_button.grid(row=4, column=0, padx=5, pady=5, sticky = 'w')
+reset_button = ctk.CTkButton(dbscan_frame, text="Reset", width=30, command=show_empty_plot_dbscan)
+reset_button.grid(row=4, column=1, padx=5, pady=5, sticky = 'w')
 
 # Leeren Plot anzeigen beim Start
 show_empty_plot_dbscan()
@@ -338,8 +435,18 @@ root.grid_columnconfigure(1, weight=2)
 root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=1)
 
+# Fenstergröße an Bildschirmauflösung anpassen (Skalierung z.B. 80% der Bildschirmgröße)
+resize_window_to_screen(root, scale=0.8)
+"""
+                                                                                            ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+                                                                                            was passiert nun, wenn die rescalierung kleiner ist,
+                                                                                            als die minimale fenstergröße? wie kann man das umgehen?
+                                                                                            ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+                                                                                            """
 # Nach dem Hinzufügen aller Widgets die minimale Fenstergröße festlegen
 set_minimum_window_size(root)
+
+
 
 # Hauptloop der root starten
 root.mainloop()
