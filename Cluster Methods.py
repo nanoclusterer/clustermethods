@@ -15,7 +15,21 @@ plt.style.use('https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitay
 root = ctk.CTk()
 root.title("ClusterMethods")
 root.geometry("1000x600")
-root.minsize(width = 500, height = 300)
+
+# ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+# Fenster Funktionen (root)
+# ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+
+def set_minimum_window_size(root):
+    # Update the app layout to calculate the required size
+    root.update()
+
+    # Get the width and height needed for the app's content
+    required_width = root.winfo_reqwidth()
+    required_height = root.winfo_reqheight()
+
+    # Set the minimum size of the window to this size
+    root.minsize(required_width, required_height)
 
 # ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
 # Data Input Funktionen
@@ -106,7 +120,7 @@ def validate_input(new_value):
 k_var = StringVar()
 k_var.trace_add("write", lambda *args: validate_input(k_var.get()))
 
-# ▉▉▉▉▉▉K-MEANS▉▉▉▉▉▉
+# ▉▉▉▉▉▉K-Means▉▉▉▉▉▉
 
 def kmeans():
     file_path = data_input_entry.get()  # Pfad zur Datei aus Entry
@@ -146,6 +160,69 @@ def kmeans():
         canvasKmeans.draw()
     except Exception as e:
         print(f"Fehler beim Laden der Datei: {e}")
+        
+# ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+# Elbow Funktionen
+# ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+
+# Globale Variable für die Matplotlib-Figur
+figElbow, axElbow = plt.subplots(figsize=(5, 4))
+
+# Funktion zum Anzeigen des leeren Plots
+def show_empty_plot_elbow():
+    axElbow.clear()  # Leeren der Figur für neuen Plot
+    axElbow.set_title("Empty Plot")
+    axElbow.set_xlim(0, 10)  # X-Achse von 0 bis 10
+    axElbow.set_ylim(0, 10)  # Y-Achse von 0 bis 10
+    axElbow.set_xlabel("X-axis")
+    axElbow.set_ylabel("Y-axis")
+    axElbow.plot([], [])  # Keine Datenpunkte
+    canvasElbow.draw()
+
+# ▉▉▉▉▉▉Elbow Method▉▉▉▉▉▉
+def elbow_method(X, max_k=10):
+    """
+    Führt die Elbow-Methode auf den Daten durch und plottet die WCSS für verschiedene Werte von k.
+    
+    Args:
+    - X: Die Daten, die geclustert werden sollen (2D-Liste oder NumPy-Array)
+    - max_k: Die maximale Anzahl von Clustern, die getestet werden soll (Standard: 10)
+    """
+    wcss = []
+    
+    # Teste KMeans für k = 1 bis max_k
+    for k in range(1, max_k + 1):
+        kmeans = KMeans(n_clusters=k)
+        kmeans.fit(X)
+        wcss.append(kmeans.inertia_)  # Die Summe der quadratischen Abstände (Inertia)
+
+    # Plot der Elbow-Methode
+    plt.figure(figsize=(8, 6))
+    plt.plot(range(1, max_k + 1), wcss, 'bo-', markersize=8)
+    plt.title('Elbow Method for Optimal k')
+    plt.xlabel('Number of clusters (k)')
+    plt.ylabel('WCSS (Inertia)')
+    plt.xticks(range(1, max_k + 1))
+    plt.grid(True)
+    plt.show()
+
+# ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+# DBSCAN Funktionen
+# ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+
+# Globale Variable für die Matplotlib-Figur
+figDBSCAN, axDBSCAN = plt.subplots(figsize=(5, 4))
+
+# Funktion zum Anzeigen des leeren Plots
+def show_empty_plot_dbscan():
+    axDBSCAN.clear()  # Leeren der Figur für neuen Plot
+    axDBSCAN.set_title("Empty Plot")
+    axDBSCAN.set_xlim(0, 10)  # X-Achse von 0 bis 10
+    axDBSCAN.set_ylim(0, 10)  # Y-Achse von 0 bis 10
+    axDBSCAN.set_xlabel("X-axis")
+    axDBSCAN.set_ylabel("Y-axis")
+    axDBSCAN.plot([], [])  # Keine Datenpunkte
+    canvasDBSCAN.draw()
 
 # ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
 # GUI Elemente
@@ -156,7 +233,7 @@ def kmeans():
 # =============================================================================
 
 data_input_frame = ctk.CTkFrame(root)
-data_input_frame.grid(row=0, column=0, padx=6, pady=6)
+data_input_frame.grid(row=0, column=0, padx=6, pady=6, sticky = 'nsew')
 
 entry_var = StringVar()  # StringVar für das Entry, um Änderungen nachzuverfolgen
 entry_var.trace_add("write", on_entry_change)  # Überwache Änderungen im Entry-Feld
@@ -180,7 +257,7 @@ show_empty_plot_data()
 # =============================================================================
 
 kmeans_frame = ctk.CTkFrame(root)
-kmeans_frame.grid(row=2, column=0, padx=6, pady=6)
+kmeans_frame.grid(row=0, column=1, padx=6, pady=6, sticky = 'nsew')
 kmeans_label = ctk.CTkLabel(kmeans_frame, text = "K-Means")
 kmeans_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
 compute_button = ctk.CTkButton(kmeans_frame, text="Compute", width=30, command=kmeans)
@@ -196,21 +273,73 @@ k_entry.grid(row=1, column=1, padx=6, pady=6)
 
 # Matplotlib Canvas in das Tkinter-Fenster einfügen
 canvasKmeans = FigureCanvasTkAgg(figKmeans, kmeans_frame)
-canvasKmeans.get_tk_widget().grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+canvasKmeans.get_tk_widget().grid(row=2, column=2, columnspan=2, padx=10, pady=10, sticky="nsew")
 
 # Leeren Plot anzeigen beim Start
 show_empty_plot_kmeans()
 
+# ======Elbow Method======
 
 
+
+
+# Matplotlib Canvas in das Tkinter-Fenster einfügen
+canvasElbow = FigureCanvasTkAgg(figElbow, kmeans_frame)
+canvasElbow.get_tk_widget().grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+
+# Leeren Plot anzeigen beim Start
+show_empty_plot_elbow()
+
+# =============================================================================
+# DBSCAN Input Frame
+# =============================================================================
+
+dbscan_frame = ctk.CTkFrame(root)
+dbscan_frame.grid(row=1, column=0, padx=6, pady=6, sticky = 'nsew')
+dbscan_label = ctk.CTkLabel(dbscan_frame, text = "DBSCAN")
+dbscan_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
+
+epsilon_parameter_label = ctk.CTkLabel(dbscan_frame, text = "radius E")
+epsilon_parameter_label.grid(row=1, column=0, padx=5, pady=5, sticky = 'w')
+# Validierungsfunktion registrieren
+#####vcmd = (root.register(validate_input), "%P")
+epsilon_entry = ctk.CTkEntry(dbscan_frame, textvariable=k_var, width=40, height=30, validate="key", validatecommand=vcmd, justify="center")
+epsilon_entry.grid(row=1, column=1, padx=6, pady=6, sticky = 'e')
+
+points_parameter_label = ctk.CTkLabel(dbscan_frame, text = "min. Points in r")
+points_parameter_label.grid(row=2, column=0, padx=5, pady=5, sticky = 'w')
+# Validierungsfunktion registrieren
+#####vcmd = (root.register(validate_input), "%P")
+points_entry = ctk.CTkEntry(dbscan_frame, textvariable=k_var, width=40, height=30, validate="key", validatecommand=vcmd, justify="center")
+points_entry.grid(row=2, column=1, padx=6, pady=6, sticky = 'e')
+
+# Matplotlib Canvas in das Tkinter-Fenster einfügen
+canvasDBSCAN = FigureCanvasTkAgg(figDBSCAN, dbscan_frame)
+canvasDBSCAN.get_tk_widget().grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+
+# Leeren Plot anzeigen beim Start
+show_empty_plot_dbscan()
+
+# =============================================================================
+# ILS Input Frame
+# =============================================================================
+
+ils_frame = ctk.CTkFrame(root)
+ils_frame.grid(row=1, column=1, padx=6, pady=6, sticky = 'nsew')
+ils_label = ctk.CTkLabel(ils_frame, text = "ILS")
+ils_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
 
 
 
 
 # Layout-Konfiguration für flexibles Größenanpassen
 root.grid_columnconfigure(0, weight=1)
-root.grid_rowconfigure(2, weight=1)
+root.grid_columnconfigure(1, weight=2)
+root.grid_rowconfigure(0, weight=1)
+root.grid_rowconfigure(1, weight=1)
 
+# Nach dem Hinzufügen aller Widgets die minimale Fenstergröße festlegen
+set_minimum_window_size(root)
 
 # Hauptloop der root starten
 root.mainloop()
