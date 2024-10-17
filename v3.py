@@ -6,8 +6,45 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 import os
+import seaborn as sns
 
-plt.style.use('https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-dark.mplstyle')
+# Globale Seaborn-Parameter setzen
+sns.set_context("notebook")
+sns.set_style("darkgrid")
+
+# Definieren der Parameter
+plt.rcParams.update({
+    'legend.frameon': False,
+    'legend.numpoints': 1,
+    'legend.scatterpoints': 1,
+    'xtick.direction': 'out',
+    'ytick.direction': 'out',
+    'axes.axisbelow': True,
+    'font.family': 'sans-serif',
+    'grid.linestyle': '-',
+    'lines.solid_capstyle': 'round',
+    'axes.grid': True,
+    'axes.edgecolor': 'white',
+    'axes.linewidth': 0,
+    'xtick.major.size': 0,
+    'ytick.major.size': 0,
+    'xtick.minor.size': 0,
+    'ytick.minor.size': 0,
+    'text.color': '0.9',  # Textfarbe
+    'axes.labelcolor': '0.9',  # Achsenbeschriftungsfarbe
+    'xtick.color': '0.9',  # X-Achsenfarbe
+    'ytick.color': '0.9',  # Y-Achsenfarbe
+    'grid.color': '#2A3459',  # Gitterfarbe
+    'font.sans-serif': ['Overpass', 'Helvetica', 'Helvetica Neue', 'Arial', 'Liberation Sans', 'DejaVu Sans', 'Bitstream Vera Sans', 'sans-serif'],
+    'axes.prop_cycle': plt.cycler(color=['#18c0c4', '#f62196', '#A267F5', '#f3907e', '#ffe46b', '#fefeff']),
+    'image.cmap': 'RdPu',
+    'figure.facecolor': '#2A3459',
+    'axes.facecolor': '#212946',
+    'savefig.facecolor': '#2A3459'
+})
+
+#plt.style.use('https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-light.mplstyle')
+
 root_color = "#1D243D"
 frame_color = "#212946"
 button_color = "#2A3459"
@@ -217,8 +254,20 @@ def show_empty_plot_elbow():
     axElbow.text(0.5, 0.5, "Elbow", horizontalalignment='center', verticalalignment='center', fontsize=12, transform=axData.transAxes)
     canvasElbow.draw()
 
+# Funktion, um die Eingabe für epsilon und min_samples auf gültige Werte zu beschränken
+def validate_elbow(new_value):
+    if new_value == "":  # Erlaubt leere Eingaben (falls der User löscht)
+        return True
+    if new_value.isdigit() and len(new_value) <= 3 and int(new_value) > 1:  # Nur Ziffern, max. 3 Stellen, grösser als 4
+        return True
+    return False
+
+# Validierung der Eingabe für das k-Entry
+elbow_var = StringVar()
+elbow_var.trace_add("write", lambda *args: validate_input(elbow_var.get()))
+
 # ▉▉▉▉▉▉Elbow Method▉▉▉▉▉▉
-def elbow_method(max_k=10):
+def elbow_method():
     """
     Führt die Elbow-Methode auf den Daten durch und plottet die WCSS für verschiedene Werte von k.
     
@@ -226,7 +275,8 @@ def elbow_method(max_k=10):
     - X: Die Daten, die geclustert werden sollen (2D-Liste oder NumPy-Array)
     - max_k: Die maximale Anzahl von Clustern, die getestet werden soll (Standard: 10)
     """
-    
+    # Den Wert von k max aus dem Entry lesen
+    max_k = int(elbow_var.get())
     file_path = data_input_entry.get()  # Pfad zur Datei aus Entry
     try:
         # Datei laden (CSV oder TXT)
@@ -366,10 +416,10 @@ entry_var = StringVar()  # StringVar für das Entry, um Änderungen nachzuverfol
 entry_var.trace_add("write", on_entry_change)  # Überwache Änderungen im Entry-Feld
 
 data_input_label = ctk.CTkLabel(data_input_frame, text = "Data", font=headline_font)
-data_input_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
+data_input_label.grid(row=0, column=0, padx=10, pady=10, sticky = 'w')
 data_input_entry = ctk.CTkEntry(data_input_frame, textvariable=entry_var, placeholder_text = "filepath", font=entry_font, fg_color=entry_color, border_width=0)
-data_input_entry.grid(row=1, column=0, padx=5, pady=5, sticky = "ew")
-data_input_button = ctk.CTkButton(data_input_frame, text="", width=30, command=open_file_dialog, font=label_font, fg_color=button_color)
+data_input_entry.grid(row=1, column=0, padx=10, pady=10, sticky = "ew")
+data_input_button = ctk.CTkButton(data_input_frame, text="📂", width=30, command=open_file_dialog, font=label_font, fg_color=button_color)
 data_input_button.grid(row=1, column=1, padx=5, pady=5, sticky = 'e')
 
 # Matplotlib Canvas in das Tkinter-Fenster einfügen
@@ -386,17 +436,17 @@ show_empty_plot_data()
 kmeans_frame = ctk.CTkFrame(root, fg_color=frame_color)
 kmeans_frame.grid(row=0, column=1, padx=6, pady=6, sticky = 'nsew')
 kmeans_label = ctk.CTkLabel(kmeans_frame, text = "K-Means", font=headline_font)
-kmeans_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
+kmeans_label.grid(row=0, column=0, padx=10, pady=10, sticky = 'w')
 compute_button = ctk.CTkButton(kmeans_frame, text="Compute", width=30, command=kmeans, font=label_font, fg_color=button_color)
-compute_button.grid(row=3, column=0, padx=5, pady=5, sticky = 'w')
+compute_button.grid(row=3, column=2, padx=10, pady=10, sticky = 'w')
 reset_button = ctk.CTkButton(kmeans_frame, text="Reset", width=30, command=show_empty_plot_kmeans, font=label_font, fg_color=button_color)
-reset_button.grid(row=3, column=1, padx=5, pady=5, sticky = 'w')
+reset_button.grid(row=3, column=3, padx=10, pady=10, sticky = 'w')
 k_parameter_label = ctk.CTkLabel(kmeans_frame, text = "cluster quantity k", font=label_font)
-k_parameter_label.grid(row=1, column=0, padx=5, pady=5, sticky = 'w')
+k_parameter_label.grid(row=1, column=2, padx=5, pady=5, sticky = 'w')
 # Validierungsfunktion registrieren
 vcmd = (root.register(validate_input), "%P")
 k_entry = ctk.CTkEntry(kmeans_frame, textvariable=k_var, width=40, height=30, validate="key", validatecommand=vcmd, justify="center", font=entry_font, fg_color=entry_color, border_width=0)
-k_entry.grid(row=1, column=1, padx=6, pady=6)
+k_entry.grid(row=1, column=3, padx=10, pady=10)
 
 # Matplotlib Canvas in das Tkinter-Fenster einfügen
 canvasKmeans = FigureCanvasTkAgg(figKmeans, kmeans_frame)
@@ -406,10 +456,17 @@ canvasKmeans.get_tk_widget().grid(row=2, column=2, columnspan=2, padx=10, pady=1
 show_empty_plot_kmeans()
 
 # ======Elbow Method======
-elbow_button = ctk.CTkButton(kmeans_frame, text="Compute elbow", width=30, command=elbow_method, font=label_font, fg_color=button_color)
-elbow_button.grid(row=3, column=2, padx=5, pady=5, sticky = 'w')
+elbow_button = ctk.CTkButton(kmeans_frame, text="Compute", width=30, command=elbow_method, font=label_font, fg_color=button_color)
+elbow_button.grid(row=3, column=0, padx=10, pady=10, sticky = 'w')
+elbow_reset_button = ctk.CTkButton(kmeans_frame, text="Reset", width=30, command=show_empty_plot_elbow, font=label_font, fg_color=button_color)
+elbow_reset_button.grid(row=3, column=1, padx=10, pady=10, sticky = 'w')
 
-
+k_parameter_label = ctk.CTkLabel(kmeans_frame, text = "max. k", font=label_font)
+k_parameter_label.grid(row=1, column=0, padx=10, pady=10, sticky = 'w')
+# Validierungsfunktion registrieren
+vcmd_elbow = (root.register(validate_elbow), "%P")
+k_entry = ctk.CTkEntry(kmeans_frame, textvariable=elbow_var, width=40, height=30, validate="key", validatecommand=vcmd_elbow, justify="center", font=entry_font, fg_color=entry_color, border_width=0)
+k_entry.grid(row=1, column=1, padx=10, pady=10)
 
 # Matplotlib Canvas in das Tkinter-Fenster einfügen
 canvasElbow = FigureCanvasTkAgg(figElbow, kmeans_frame)
@@ -425,28 +482,28 @@ show_empty_plot_elbow()
 dbscan_frame = ctk.CTkFrame(root, fg_color=frame_color)
 dbscan_frame.grid(row=1, column=0, padx=6, pady=6, sticky = 'nsew')
 dbscan_label = ctk.CTkLabel(dbscan_frame, text = "DBSCAN", font=headline_font)
-dbscan_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
+dbscan_label.grid(row=0, column=0, padx=10, pady=10, sticky = 'w')
 
-epsilon_parameter_label = ctk.CTkLabel(dbscan_frame, text = "radius E", font=label_font)
-epsilon_parameter_label.grid(row=1, column=0, padx=5, pady=5, sticky = 'w')
+epsilon_parameter_label = ctk.CTkLabel(dbscan_frame, text = "radius ε", font=label_font)
+epsilon_parameter_label.grid(row=1, column=0, padx=10, pady=10, sticky = 'w')
 # Validierungsfunktion registrieren
 vcmd_epsilon = (root.register(validate_input_epsilon), "%P")
 epsilon_entry = ctk.CTkEntry(dbscan_frame, textvariable=epsilon_var, width=40, height=30, validate="key", validatecommand=vcmd_epsilon, justify="center", font=entry_font, fg_color=entry_color, border_width=0)
-epsilon_entry.grid(row=1, column=1, padx=6, pady=6, sticky = 'e')
+epsilon_entry.grid(row=1, column=1, padx=10, pady=10, sticky = 'e')
 
 samples_parameter_label = ctk.CTkLabel(dbscan_frame, text = "min. Points in r", font=label_font)
-samples_parameter_label.grid(row=2, column=0, padx=5, pady=5, sticky = 'w')
+samples_parameter_label.grid(row=2, column=0, padx=10, pady=10, sticky = 'w')
 # Validierungsfunktion registrieren
 vcmd_samples = (root.register(validate_input_min_samples), "%P")
 samples_entry = ctk.CTkEntry(dbscan_frame, textvariable=min_samples_var, width=40, height=30, validate="key", validatecommand=vcmd_samples, justify="center", font=entry_font, fg_color=entry_color, border_width=0)
-samples_entry.grid(row=2, column=1, padx=6, pady=6, sticky = 'e')
+samples_entry.grid(row=2, column=1, padx=10, pady=10, sticky = 'e')
 
 # Matplotlib Canvas in das Tkinter-Fenster einfügen
 canvasDBSCAN = FigureCanvasTkAgg(figDBSCAN, dbscan_frame)
 canvasDBSCAN.get_tk_widget().grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
 
 compute_button = ctk.CTkButton(dbscan_frame, text="Compute", width=30, command=dbscan, font=label_font, fg_color=button_color)
-compute_button.grid(row=4, column=0, padx=5, pady=5, sticky = 'w')
+compute_button.grid(row=4, column=0, padx=10, pady=10, sticky = 'w')
 reset_button = ctk.CTkButton(dbscan_frame, text="Reset", width=30, command=show_empty_plot_dbscan, font=label_font, fg_color=button_color)
 reset_button.grid(row=4, column=1, padx=5, pady=5, sticky = 'w')
 
@@ -460,7 +517,7 @@ show_empty_plot_dbscan()
 ils_frame = ctk.CTkFrame(root, fg_color=frame_color)
 ils_frame.grid(row=1, column=1, padx=6, pady=6, sticky = 'nsew')
 ils_label = ctk.CTkLabel(ils_frame, text = "ILS", font=headline_font)
-ils_label.grid(row=0, column=0, padx=5, pady=5, sticky = 'w')
+ils_label.grid(row=0, column=0, padx=10, pady=10, sticky = 'w')
 
 
 
