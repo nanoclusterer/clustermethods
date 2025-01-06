@@ -159,7 +159,7 @@ figData.subplots_adjust(bottom=0.18, left=0.18)
 # Funktion zum Anzeigen eines leeren Plots, wenn keine Daten geladen sind
 def show_empty_plot_data():
     axData.clear()  # Leeren der Figur für neuen Plot
-    axData.axis("off")
+    axData.axis("off")  # Keine Achsen werden angezeigt
     axData.text(0.45, 0.45, "No Data loaded", horizontalalignment='center',
                 verticalalignment='center', fontsize=12, transform=axData.transAxes)
     canvasData.draw()
@@ -434,10 +434,11 @@ def validate_input_min_samples(new_value):
     return False
 
 
-# Validierung für epsilon und min_samples
+# Validierung für epsilon
 epsilon_var = StringVar()
 epsilon_var.trace_add("write", lambda *args: validate_input_epsilon(epsilon_var.get()))
 
+# Validierung für min_samples
 min_samples_var = StringVar()
 min_samples_var.trace_add("write", lambda *args: validate_input_min_samples(min_samples_var.get()))
 
